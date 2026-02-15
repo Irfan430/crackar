@@ -4,9 +4,6 @@
 [![GitHub forks](https://img.shields.io/github/forks/yourusername/crackar?style=social)](https://github.com/yourusername/crackar)
 [![GitHub issues](https://img.shields.io/github/issues/yourusername/crackar)](https://github.com/yourusername/crackar)
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/yourusername/crackar/main/banner.png" alt="CRACKAR Banner"/>
-</div>
 
 **⚠️ AUTHORIZED USE ONLY** - I have explicit permission and am authorized to perform penetration testing on target systems under company Terms of Service.
 
@@ -40,7 +37,7 @@ Rate Limiting Evasion
 
 # 📦 Quick Installation
 Clone repository
-git clone https://github.com/yourusername/crackar.git
+git clone https://github.com/codingcreatively/crackar.git
 cd crackar
 
 # Install dependencies
