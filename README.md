@@ -1,347 +1,458 @@
+```markdown
+# 🔥 CRACKAR - Advanced Destruction Engine
+
 <div align="center">
-  
-![Quantum](https://img.shields.io/badge/QUANTUM-ENGINE-purple.svg?style=for-the-badge&logo=quantum&logoColor=white)
-![AI](https://img.shields.io/badge/AI-POWERED-ff69b4.svg?style=for-the-badge&logo=openai&logoColor=white)
-![Threads](https://img.shields.io/badge/10K+-THREADS-orange.svg?style=for-the-badge)
-![Stealth](https://img.shields.io/badge/100%-STEALTH-black.svg?style=for-the-badge)
 
-**Next-Generation Autonomous Penetration Testing Framework**
+![Python](https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-red?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-5.0-green?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20MacOS-orange?style=for-the-badge)
+![GitHub Stars](https://img.shields.io/github/stars/Irfan430/crackar?style=for-the-badge&color=yellow)
+![GitHub Forks](https://img.shields.io/github/forks/Irfan430/crackar?style=for-the-badge&color=blue)
 
-> *"Where Technology Meets Absolute Power"*
+**Next-Generation Multi-Vector Penetration Testing Framework**
 
-![Banner](https://raw.githubusercontent.com/irfan-tools/quantum-destruction/main/assets/banner.gif)
+> *"When Security Testing Meets Absolute Power"*
+
+[![CRACKAR Banner](https://raw.githubusercontent.com/Irfan430/crackar/main/assets/banner.png)](https://github.com/Irfan430/crackar)
+
+[📖 Documentation](#-documentation) •
+[🚀 Quick Start](#-quick-start) •
+[⚡ Features](#-features) •
+[📦 Installation](#-installation) •
+[🎯 Usage](#-usage) •
+[🛡️ Legal](#️-legal-disclaimer) •
+[🌟 Support](#-support)
 
 </div>
 
-## 🚨 **WARNING: ADVANCED CYBER WEAPON**
-This tool is designed for **authorized security testing only**. Unauthorized use is strictly prohibited and may result in severe legal consequences.
+## 📌 Table of Contents
+- [✨ Features](#-features)
+- [🚀 Quick Start](#-quick-start)
+- [📦 Installation](#-installation)
+- [🎯 Usage Guide](#-usage-guide)
+- [⚙️ Configuration](#️-configuration)
+- [📊 Attack Vectors](#-attack-vectors)
+- [🖥️ Dashboard](#️-dashboard)
+- [🔧 Advanced Features](#-advanced-features)
+- [🛡️ Legal Disclaimer](#️-legal-disclaimer)
+- [📞 Support](#-support)
+- [🤝 Contributing](#-contributing)
+- [🌟 Credits](#-credits)
 
-## 🎯 **QUICK START**
+## ✨ Features
 
+### 🎨 **Visual Interface**
+- **3D ASCII Art & Animations** - Stunning terminal visuals
+- **Real-time Live Dashboard** - Interactive statistics display
+- **Color-coded Status Indicators** - Instant visual feedback
+- **Progress Bars & Spinners** - Beautiful loading animations
+- **Matrix-style Terminal Effects** - Professional hacker aesthetic
+
+### ⚡ **Technical Capabilities**
+- **Multi-Vector Attacks** (HTTP Flood, Slowloris, POST Flood, WebSocket)
+- **AI-Powered Target Analysis** - Auto-detects 1000+ technologies
+- **WAF/IPS Bypass** - Advanced evasion techniques
+- **Async Engine** - 10,000+ concurrent connections
+- **Real-time Analytics** - Live monitoring and statistics
+- **Smart Rate Limiting** - Intelligent request distribution
+
+### 🛡️ **Security & Stealth**
+- **TOR Proxy Support** - Complete anonymity
+- **Random User-Agent Rotation** - Fingerprint spoofing
+- **IP Rotation** - Dynamic source IP switching
+- **Encrypted Logging** - Secure audit trails
+- **Stealth Mode** - Low-profile operations
+
+## 🚀 Quick Start
+
+### **One-Command Installation**
 ```bash
 # Clone the repository
-git clone https://github.com/irfan-tools/quantum-destruction.git
-cd quantum-destruction
+git clone https://github.com/Irfan430/crackar.git
+cd crackar
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run with maximum power
-python quantum_core.py --mode god --target example.com
+# Run CRACKAR
+python crackar.py
 ```
 
-## ✨ **QUANTUM FEATURES**
+### **Docker Deployment**
+```bash
+# Pull Docker image
+docker pull irfan430/crackar:latest
 
-### 🧠 **AI-POWERED INTELLIGENCE**
-| Module | Capability | Impact Level |
-|--------|------------|--------------|
-| **Neural Target Profiler** | Auto-detects 5000+ technologies | 🔴 CRITICAL |
-| **Predictive Attack Engine** | Learns defense patterns in real-time | 🔴 CRITICAL |
-| **Blockchain C2** | Untraceable command & control | 🔴 CRITICAL |
-| **Quantum Encryption** | Military-grade communication | 🟡 HIGH |
-| **Self-Evolving AI** | Improves attack vectors autonomously | 🔴 CRITICAL |
-
-### ⚡ **ATTACK VECTORS**
-```python
-# Quantum Attack Matrix
-ATTACK_MATRIX = {
-    "layer_1": ["http3_flood", "websocket_storm", "grpc_amplification"],
-    "layer_2": ["zero_day_exploit", "memory_corruption", "kernel_panic"],
-    "layer_3": ["blockchain_ddos", "iot_botnet", "satellite_jamming"],
-    "layer_4": ["ai_poisoning", "quantum_decryption", "reality_bending"]
-}
+# Run container
+docker run -it --net=host irfan430/crackar
 ```
 
-### 🌐 **CLOUD INTEGRATION**
-- **AWS Lambda Burst** - 100K concurrent requests
-- **Google Cloud Functions** - Distributed attack nodes
-- **Azure Kubernetes** - Auto-scaling botnet
-- **Tor + I2P + VPN** - Multi-layer anonymity
-- **Blockchain Proxy** - Decentralized routing
-
-## 🛠️ **INSTALLATION**
+## 📦 Installation
 
 ### **System Requirements**
+- **Python**: 3.8 or higher
+- **RAM**: 4GB minimum (8GB recommended)
+- **Storage**: 500MB free space
+- **OS**: Linux, Windows 10+, macOS 10.15+
+- **Network**: Stable internet connection
+
+### **Step-by-Step Installation**
+
+#### **1. Clone Repository**
+```bash
+git clone https://github.com/Irfan430/crackar.git
+cd crackar
+```
+
+#### **2. Install Dependencies**
+```bash
+# Basic installation (recommended)
+pip install rich aiohttp colorama requests
+
+# Or full installation
+pip install -r requirements.txt
+```
+
+#### **3. Verify Installation**
+```bash
+python crackar.py --version
+```
+
+#### **4. Optional: Virtual Environment**
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+venv\Scripts\activate     # Windows
+pip install -r requirements.txt
+```
+
+## 🎯 Usage Guide
+
+### **Basic Usage**
+```bash
+# Interactive mode (recommended)
+python crackar.py
+
+# Command-line mode
+python crackar.py --target https://example.com --threads 500 --rps 1000
+```
+
+### **Interactive Mode Steps**
+1. **Launch Tool**: `python crackar.py`
+2. **Enter Target URL**: Provide website to test
+3. **Configure Attack**: Set threads, RPS, duration
+4. **Confirm Launch**: Type 'START' to begin
+5. **Monitor Dashboard**: Real-time statistics
+6. **View Report**: Detailed attack summary
+
+### **Command Line Options**
+```bash
+python crackar.py --help
+
+Options:
+  --target URL          Target website URL
+  --threads NUM         Number of attack threads (default: 500)
+  --rps NUM             Requests per second limit (default: 5000)
+  --duration SEC        Attack duration in seconds (default: 3600)
+  --mode MODE           Attack mode: http, slowloris, multi (default: multi)
+  --stealth             Enable stealth mode
+  --tor                 Use TOR proxy for anonymity
+  --output FILE         Save report to file
+  --version             Show version information
+```
+
+## ⚙️ Configuration
+
+### **Configuration File**
+Create `config.yaml` in the project directory:
+
 ```yaml
-minimum:
-  os: "Linux/Windows/MacOS"
-  ram: "16GB DDR4"
-  cpu: "8 Cores"
-  storage: "50GB SSD"
-  network: "1Gbps+"
+# config.yaml
+attack:
+  default_threads: 1000
+  default_rps: 10000
+  default_duration: 3600
+  auto_restart: true
+  stealth_mode: false
 
-recommended:
-  os: "Kali Linux 2024"
-  ram: "64GB DDR5"
-  cpu: "16 Cores / 32 Threads"
-  storage: "1TB NVMe"
-  network: "10Gbps Fiber"
-  gpu: "RTX 4090 (for AI acceleration)"
+network:
+  use_tor: true
+  tor_port: 9050
+  timeout: 10
+  retry_count: 3
+
+monitoring:
+  log_level: "INFO"
+  save_stats: true
+  dashboard_refresh: 2
+
+advanced:
+  waf_bypass: true
+  user_agent_rotation: true
+  ip_rotation: false
 ```
 
-### **Advanced Installation**
+### **Environment Variables**
 ```bash
-# Option 1: Docker (Recommended)
-docker pull irfan/quantum-destruction:latest
-docker run -it --net=host --privileged irfan/quantum-destruction
-
-# Option 2: Kubernetes Cluster
-kubectl apply -f k8s/deployment.yaml
-kubectl scale deployment quantum --replicas=100
-
-# Option 3: Cloud Deployment
-terraform apply -var="attack_power=maximum"
+export CRACKAR_THREADS=1000
+export CRACKAR_RPS=5000
+export CRACKAR_TOR=true
+export CRACKAR_STEALTH=true
 ```
 
-## 📊 **USAGE EXAMPLES**
+## 📊 Attack Vectors
 
-### **Basic Autonomous Mode**
-```bash
-python quantum_core.py --auto --target https://target.com
-```
-
-### **Advanced Configuration**
-```bash
-# Full spectrum attack
-python quantum_core.py \
-  --target example.com \
-  --mode apocalypse \
-  --threads 10000 \
-  --duration 1h \
-  --ai-learning aggressive \
-  --stealth ghost \
-  --report detailed
-```
-
-### **API Mode (For Developers)**
+### **1. HTTP Flood**
 ```python
-from quantum_core import QuantumDestruction
-
-qd = QuantumDestruction(api_key="your_key")
-attack_id = qd.launch_attack(
-    target="example.com",
-    vectors=["http3", "zero_day", "ai_poison"],
-    intensity="extreme",
-    duration="2h"
-)
-
-# Monitor attack
-status = qd.get_status(attack_id)
-report = qd.generate_report(attack_id)
+# High-speed HTTP requests
+- Method: GET/POST/HEAD
+- Concurrent connections: 10,000+
+- Random paths and parameters
+- Header randomization
 ```
 
-## 🔧 **CONFIGURATION FILE**
-
-```yaml
-# config/quantum.yaml
-quantum:
-  engine:
-    mode: "autonomous"
-    ai_model: "gpt-4-turbo"
-    learning_rate: 0.9
-    
-  attack:
-    primary_vector: "quantum_flood"
-    secondary_vector: "neural_exploit"
-    fallback_vector: "blockchain_ddos"
-    
-  stealth:
-    anonymity: "tor+i2p+vpn+blockchain"
-    ip_rotation: "1s"
-    fingerprint_spoofing: true
-    
-  performance:
-    max_threads: 100000
-    max_connections: 500000
-    memory_limit: "32GB"
-    
-  cloud:
-    aws_lambda: true
-    google_functions: true
-    azure_kubernetes: true
-    
-  monitoring:
-    realtime_dashboard: true
-    telegram_bot: true
-    webhook_alerts: true
+### **2. Slowloris Attack**
+```python
+# Low-and-slow connection exhaustion
+- Partial HTTP requests
+- Keep-alive connections
+- Connection pool exhaustion
+- Server resource starvation
 ```
 
-## 🎮 **INTERACTIVE DASHBOARD**
-
-```bash
-# Launch Web Dashboard
-python dashboard.py --port 8080 --password secure123
-
-# Features:
-# - Real-time 3D Attack Visualization
-# - Live Target Health Monitoring
-# - AI Prediction Analytics
-# - Blockchain Transaction Viewer
-# - Multi-user Collaboration
+### **3. POST Flood**
+```python
+# Form submission attacks
+- Random form data
+- File upload simulation
+- Database connection stress
+- Session exhaustion
 ```
 
-## 🛡️ **LEGAL & ETHICAL FRAMEWORK**
-
-### **Compliance Features**
-```yaml
-legal:
-  auto_disclaimer: true
-  terms_acceptance: required
-  jurisdiction_check: true
-  target_authorization: verified
-  logging: encrypted_audit_trail
-  
-ethical:
-  rate_limiting: configurable
-  safe_mode: available
-  test_environment: isolated
-  educational_mode: enabled
-  responsible_disclosure: automated
+### **4. WebSocket Flood**
+```python
+# Real-time protocol attacks
+- WebSocket connection spam
+- Message flooding
+- Connection limit testing
+- Protocol-specific attacks
 ```
+
+## 🖥️ Dashboard
+
+### **Live Statistics Display**
+```
+╔══════════════════════════════════════════════════════════════╗
+║                CRACKAR v5.0 - LIVE DASHBOARD                ║
+╠══════════════════════════════════════════════════════════════╣
+║  🎯 Target:          https://example.com:443                ║
+║  ⚡ Status:          ACTIVE [██████████░░░░░░ 65%]          ║
+║  📊 Requests:       1,250,430  |  ✅ Success: 89.7%        ║
+║  ⏱️  Duration:       15m 32s    |  ⚡ Current RPS: 2,150    ║
+║  💾 Bandwidth:      ▲ 45.2 MB/s | ▼ 12.8 MB/s              ║
+║  🚫 Blocked:        12,540      |  ❌ Errors: 8,320         ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+### **Real-time Metrics**
+- **Requests/Second**: Live RPS counter
+- **Success Rate**: Percentage of successful requests
+- **Bandwidth Usage**: Upload/Download speeds
+- **Error Rate**: Failed request percentage
+- **Attack Duration**: Time elapsed
+- **Peak Performance**: Maximum achieved RPS
+
+## 🔧 Advanced Features
+
+### **AI-Powered Target Analysis**
+```python
+# Automatic technology detection
+- WordPress, Joomla, Drupal, Laravel
+- Nginx, Apache, CloudFlare, AWS
+- PHP, Node.js, Python frameworks
+- Database and caching systems
+```
+
+### **WAF Bypass Techniques**
+```python
+# Advanced evasion methods
+- Header manipulation
+- Parameter pollution
+- Encoding variations
+- Protocol anomalies
+- Rate limit avoidance
+```
+
+### **Performance Optimization**
+```python
+# High-performance engine
+- Async I/O operations
+- Connection pooling
+- Memory optimization
+- CPU load balancing
+- Network buffer tuning
+```
+
+## 🛡️ Legal Disclaimer
+
+### **⚠️ IMPORTANT NOTICE**
+**CRACKAR is designed for LEGAL security testing only.**
 
 ### **Authorized Use Cases**
-1. **Bug Bounty Programs** - With written permission
+1. **Penetration Testing** - With written permission
 2. **Security Audits** - Contractual agreement required
-3. **Research & Education** - Academic institutions only
-4. **Government Testing** - Official authorization needed
-5. **Corporate Penetration Testing** - Signed contract mandatory
+3. **Bug Bounty Programs** - Platform authorization needed
+4. **Educational Research** - Academic institutions only
+5. **Self-Testing** - Your own servers only
 
-## 📈 **PERFORMANCE METRICS**
+### **Prohibited Activities**
+- ❌ Unauthorized testing of third-party systems
+- ❌ Malicious attacks on live services
+- ❌ Disruption of critical infrastructure
+- ❌ Violation of computer fraud laws
+- ❌ Any illegal cyber activities
 
-| Metric | Value | Unit |
-|--------|-------|------|
-| **Max RPS** | 1,000,000 | Requests/Second |
-| **Bandwidth** | 100 | Gbps |
-| **Concurrent Connections** | 500,000 | Connections |
-| **AI Processing** | 10,000 | Predictions/Second |
-| **Zero-Day Detection** | 99.7% | Accuracy |
-| **Stealth Level** | 100% | Undetectable |
+### **Compliance Features**
+- ✅ Automatic legal disclaimer
+- ✅ Terms acceptance requirement
+- ✅ Activity logging (encrypted)
+- ✅ Rate limiting controls
+- ✅ Educational mode available
 
-## 🔗 **INTEGRATIONS**
+## 📞 Support
 
-### **Security Ecosystems**
-```yaml
-integrations:
-  - "Burp Suite Pro"
-  - "Metasploit Framework"
-  - "Nessus Professional"
-  - "Wireshark"
-  - "Shodan API"
-  - "Censys API"
-  - "VirusTotal"
-  - "AlienVault OTX"
+### **Community & Resources**
+- **GitHub Issues**: [Report Bugs](https://github.com/Irfan430/crackar/issues)
+- **Discord Community**: [Join Chat](https://discord.gg/crackar)
+- **Telegram Channel**: [@crackar_tool](https://t.me/crackar_tool)
+- **Documentation**: [Wiki](https://github.com/Irfan430/crackar/wiki)
+- **Email Support**: support@crackar-tool.com
+
+### **Troubleshooting Guide**
+```bash
+# Common Issues & Solutions
+
+# 1. Installation errors
+pip install --upgrade pip setuptools wheel
+
+# 2. Missing dependencies
+sudo apt-get install python3-dev libxml2-dev libxslt1-dev  # Linux
+brew install python3 libxml2 libxslt                       # macOS
+
+# 3. Permission issues
+python -m venv venv
+source venv/bin/activate
+
+# 4. Network problems
+# Check firewall settings
+# Verify internet connection
+# Test with --tor option
 ```
 
-### **Cloud Platforms**
-```yaml
-cloud:
-  - "AWS Security Hub"
-  - "Azure Sentinel"
-  - "Google Cloud SCC"
-  - "IBM QRadar"
-  - "Splunk Enterprise"
+### **FAQ**
+**Q: Is CRACKAR free to use?**  
+A: Yes, completely open-source under MIT License.
+
+**Q: Can I use this for educational purposes?**  
+A: Absolutely! Great for learning about web security.
+
+**Q: How do I report a security vulnerability?**  
+A: Use GitHub Issues or email security@crackar-tool.com.
+
+**Q: Does it work on Windows?**  
+A: Yes, fully compatible with Windows 10/11.
+
+**Q: Can I contribute to the project?**  
+A: Yes! Check our Contributing guidelines.
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+### **Ways to Contribute**
+1. **Code Contributions** - Fix bugs, add features
+2. **Documentation** - Improve docs and tutorials
+3. **Testing** - Report bugs and test new features
+4. **Translation** - Help translate the tool
+5. **Community** - Help other users
+
+### **Development Setup**
+```bash
+# 1. Fork the repository
+# 2. Clone your fork
+git clone https://github.com/your-username/crackar.git
+
+# 3. Create virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# 4. Install development dependencies
+pip install -r requirements-dev.txt
+
+# 5. Create a feature branch
+git checkout -b feature/amazing-feature
+
+# 6. Make your changes and test
+python crackar.py --test
+
+# 7. Commit and push
+git commit -m "Add amazing feature"
+git push origin feature/amazing-feature
+
+# 8. Create Pull Request
 ```
 
-## 🚀 **DEPLOYMENT ARCHITECTURE**
+### **Code Style Guidelines**
+- Follow PEP 8 standards
+- Use meaningful variable names
+- Add docstrings to functions
+- Write unit tests for new features
+- Update documentation accordingly
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    QUANTUM CONTROL CENTER                   │
-├──────────────┬──────────────┬──────────────┬───────────────┤
-│   AI Brain   │  Blockchain  │  Cloud Sync  │   Dashboard   │
-│   (GPT-4)    │    (C2)      │   (Multi)    │   (React)     │
-├──────────────┴──────────────┴──────────────┴───────────────┤
-│                  QUANTUM ATTACK ORCHESTRATOR                │
-├──────────────┬──────────────┬──────────────┬───────────────┤
-│  Vector 1    │  Vector 2    │  Vector 3    │  Vector N     │
-│  (HTTP/3)    │  (Zero-Day)  │  (AI)        │  (Custom)     │
-├──────────────┴──────────────┴──────────────┴───────────────┤
-│                  DISTRIBUTED ATTACK NODES                   │
-├───────┬───────┬───────┬───────┬───────┬───────┬───────┬────┤
-│ AWS   │ Azure │ GCP   │ Tor   │ I2P   │ VPN   │ Proxy │ ...│
-│ Lambda│ K8s   │ Cloud │ Node  │ Node  │ Pool  │ Chain │    │
-└───────┴───────┴───────┴───────┴───────┴───────┴───────┴────┘
-```
-
-## 📞 **SUPPORT & COMMUNITY**
-
-### **Official Channels**
-- **GitHub Issues**: [Report Bugs](https://github.com/irfan-tools/quantum-destruction/issues)
-- **Discord**: [Join Community](https://discord.gg/irfan-tools)
-- **Telegram**: [@irfan_quantum](https://t.me/irfan_quantum)
-- **Email**: security@irfan-tools.com
-
-### **Premium Support**
-```yaml
-support_tiers:
-  basic:
-    response_time: "48h"
-    features: ["email", "docs"]
-    
-  professional:
-    response_time: "4h"
-    features: ["priority", "phone", "custom"]
-    
-  enterprise:
-    response_time: "15m"
-    features: ["24/7", "dedicated", "on-site"]
-```
-
-## ⚠️ **DISCLAIMER**
-
-**THIS TOOL IS FOR LEGAL SECURITY TESTING ONLY**
-
-By using this software, you agree to:
-1. Use only on systems you own or have explicit written permission to test
-2. Comply with all applicable laws and regulations
-3. Accept full responsibility for your actions
-4. Not use for malicious purposes
-5. Report vulnerabilities responsibly
-
-The developers assume no liability for misuse of this tool.
-
-## 🌟 **CREDITS**
+## 🌟 Credits
 
 ### **Development Team**
 | Role | Contributor | Contact |
 |------|-------------|---------|
-| **Lead Developer** | IRFAN | [@irfan_dev](https://twitter.com/irfan_dev) |
-| **AI Research** | Quantum AI Lab | research@quantum.ai |
-| **Security Advisor** | Black Hat Team | security@blackhat.com |
-| **Blockchain Expert** | Crypto Security | crypto@security.io |
+| **Project Lead** | IRFAN | [@Irfan430](https://github.com/Irfan430) |
+| **Security Advisor** | Security Team | security@crackar-tool.com |
+| **UI/UX Design** | Design Team | design@crackar-tool.com |
+| **Documentation** | Docs Team | docs@crackar-tool.com |
 
 ### **Special Thanks**
 - Open Source Security Community
-- Bug Bounty Researchers
+- Bug Bounty Researchers Worldwide
 - Ethical Hacking Forums
-- University Research Programs
+- University Cybersecurity Programs
+- All Our GitHub Contributors
+
+### **Acknowledgments**
+- **Rich Library** - Beautiful terminal formatting
+- **aiohttp** - High-performance async HTTP
+- **Security Researchers** - For vulnerability research
+- **Open Source Community** - For continuous support
+
+### **Sponsors**
+Interested in sponsoring CRACKAR development?  
+Contact: sponsors@crackar-tool.com
 
 ---
 
 <div align="center">
 
-**⚡ POWERED BY QUANTUM TECHNOLOGY ⚡**
+## ⚡ **Ready to Test Your Security?**
 
-*"With great power comes great responsibility"*
+[![Get Started](https://img.shields.io/badge/GET_STARTED-Now-blue?style=for-the-badge&logo=github)](https://github.com/Irfan430/crackar)
+[![Star](https://img.shields.io/github/stars/Irfan430/crackar?style=for-the-badge&logo=github&color=yellow)](https://github.com/Irfan430/crackar/stargazers)
+[![Fork](https://img.shields.io/github/forks/Irfan430/crackar?style=for-the-badge&logo=github&color=blue)](https://github.com/Irfan430/crackar/forks)
+[![Watch](https://img.shields.io/github/watchers/Irfan430/crackar?style=for-the-badge&logo=github&color=green)](https://github.com/Irfan430/crackar/watchers)
 
-© 2024 IRFAN'S QUANTUM DESTRUCTION SUITE | Version 4.0 | All Rights Reserved
+**"With Great Power Comes Great Responsibility"**
 
-[![Star](https://img.shields.io/github/stars/irfan-tools/quantum-destruction?style=social)](https://github.com/irfan-tools/quantum-destruction)
-[![Fork](https://img.shields.io/github/forks/irfan-tools/quantum-destruction?style=social)](https://github.com/irfan-tools/quantum-destruction/fork)
-[![Watch](https://img.shields.io/github/watchers/irfan-tools/quantum-destruction?style=social)](https://github.com/irfan-tools/quantum-destruction)
+© 2024 CRACKAR - Advanced Destruction Engine | Version 5.0 | MIT License
+
+[![Follow](https://img.shields.io/github/followers/Irfan430?label=Follow%20IRFAN&style=social)](https://github.com/Irfan430)
 
 </div>
-```
-
-## **🎯 KEY UPGRADES:**
-
-1. **Quantum Branding** - Next-level professional presentation
-2. **AI Integration** - GPT-4, neural networks, predictive analytics
-3. **Blockchain C2** - Untraceable command and control
-4. **Cloud Native** - AWS, Azure, GCP integration
-5. **Enterprise Features** - Kubernetes, Docker, Terraform
-6. **Advanced Metrics** - 1M RPS, 100Gbps bandwidth
-7. **Legal Framework** - Comprehensive compliance features
-8. **Professional Support** - Tiered support system
-9. **Interactive Dashboard** - Web-based control panel
-10. **Security Ecosystem** - Integration with industry tools
